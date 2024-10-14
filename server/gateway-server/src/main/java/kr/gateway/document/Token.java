@@ -1,4 +1,4 @@
-package kr.user.document;
+package kr.gateway.document;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

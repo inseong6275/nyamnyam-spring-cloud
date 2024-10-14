@@ -1,6 +1,7 @@
 package kr.gateway.config;
 
 import io.netty.channel.ChannelOption;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -12,6 +13,7 @@ import reactor.netty.http.client.HttpClient;
 public class WebClientConfig {
 
     @Bean
+    @LoadBalanced
     public WebClient.Builder loadBlancedWebClientBuilder() {
         return WebClient.builder();
     }
