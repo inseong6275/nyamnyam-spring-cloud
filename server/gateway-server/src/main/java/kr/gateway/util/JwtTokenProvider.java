@@ -43,6 +43,24 @@ public class JwtTokenProvider {
         return Mono.just(token);
     }
 
+    public Mono<String> createOAuthToken(String username, String objectId) {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + validityInMilliseconds);
+
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        Key key = Keys.hmacShaKeyFor(keyBytes);
+
+        String token = Jwts.builder()
+                .setSubject(username) // username을 subject로 설정
+                .claim("objectId", objectId) // objectId를 클레임으로 추가
+                .setIssuedAt(now)
+                .setExpiration(expiration)
+                .signWith(key)
+                .compact();
+
+        return Mono.just(token);
+    }
+
     public Mono<Boolean> validateToken(String token) {
         try {
             Jwts.parserBuilder() // parserBuilder 사용
@@ -81,5 +99,14 @@ public class JwtTokenProvider {
 
     public Mono<Void> invalidateToken(String token) {
         return Mono.empty();
+    }
+
+    public String getObjectIdFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secret.getBytes(StandardCharsets.UTF_8))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("objectId", String.class); // objectId 추출
     }
 }

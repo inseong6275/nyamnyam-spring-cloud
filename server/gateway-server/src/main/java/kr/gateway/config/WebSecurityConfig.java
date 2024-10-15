@@ -30,7 +30,10 @@ public class WebSecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                        .anyExchange().permitAll()
+                        .pathMatchers("/auth/login").permitAll()  // 로그인 요청 허용
+                        .pathMatchers("/auth/oauth2/**").permitAll()  // OAuth2 관련 경로 허용
+                        .pathMatchers("/api/user/**").permitAll()
+                        .anyExchange().authenticated()  // 나머지 요청은 인증 필요
                 )
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
@@ -38,10 +41,19 @@ public class WebSecurityConfig {
                 .oauth2Login(oauth2Login -> oauth2Login
                         .clientRegistrationRepository(reactiveClientRegistrationRepository)
                         .authenticationSuccessHandler(serverAuthenticationSuccessHandler)
+                )
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint((exchange, e) -> {
+                            // 인증 실패 시 401 응답 반환
+                            exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+                            return exchange.getResponse().setComplete(); // 응답 완료
+                        })
                 );
+
 
         return http.build();
     }
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
