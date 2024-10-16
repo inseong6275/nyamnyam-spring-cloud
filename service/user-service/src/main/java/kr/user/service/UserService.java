@@ -6,6 +6,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserService {
 
@@ -24,5 +25,7 @@ public interface UserService {
     Mono<User> update(User user, List<MultipartFile> thumbnails);
 
     Mono<User> save(User user, List<MultipartFile> thumbnails);
+
+    Mono<User> registerNaverUser(Map<String, Object> naverUserInfo);
 
 }
