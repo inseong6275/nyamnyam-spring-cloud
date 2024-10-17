@@ -11,6 +11,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -33,31 +35,32 @@ public class AuthHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final WebClient webClient = WebClient.create();
     private final UserRepository userRepository;
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public Mono<ServerResponse> login(ServerRequest request) {
+        System.out.println("Login request received");
         return request.bodyToMono(LoginRequest.class)
-                .flatMap(req -> {
-                    return userRepository.findByUsername(req.getUsername())
-                            .flatMap(user -> {
-                                if (!user.getPassword().equals(req.getPassword())) {
-                                    return Mono.error(new RuntimeException("Invalid password"));
-                                }
+                .flatMap(req -> userRepository.findByUsername(req.getUsername())
+                        .flatMap(user -> {
+                            if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
+                                return Mono.error(new RuntimeException("Invalid password"));
+                            }
 
-                                String role = user.getRole() != null ? user.getRole() : "USER";
+                            String role = user.getRole() != null ? user.getRole() : "USER";
 
-                                UserDetails userDetails = new UserDetailsImpl(
-                                        user.getUsername(),
-                                        user.getPassword(),
-                                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
-                                );
+                            UserDetails userDetails = new UserDetailsImpl(
+                                    user.getUsername(),
+                                    user.getPassword(),
+                                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
+                            );
 
-                                return jwtTokenProvider.generateToken(userDetails, false)
-                                        .flatMap(jwt -> ServerResponse.ok().bodyValue("Login successful. JWT: " + jwt));
-                            })
-                            .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
-                })
+                            return jwtTokenProvider.generateToken(userDetails, false)
+                                    .flatMap(jwt -> ServerResponse.ok().bodyValue("Login successful. JWT: " + jwt));
+                        })
+                        .switchIfEmpty(Mono.error(new RuntimeException("User not found"))))
                 .onErrorResume(e -> ServerResponse.status(HttpStatus.UNAUTHORIZED).bodyValue("Error: " + e.getMessage()));
     }
+
 
 //
 //    // 2. 토큰 갱신 처리
