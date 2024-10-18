@@ -1,13 +1,10 @@
 package kr.gateway.component;
 
-import kr.gateway.component.JwtTokenProvider;
 import kr.gateway.config.UserDetailsImpl;
 import kr.gateway.document.LoginRequest;
 import kr.gateway.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -48,18 +45,14 @@ public class AuthHandler {
 
                             String role = user.getRole() != null ? user.getRole() : "USER";
 
-                            UserDetails userDetails = new UserDetailsImpl(
-                                    user.getUsername(),
-                                    user.getPassword(),
-                                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
-                            );
-
-                            return jwtTokenProvider.generateToken(userDetails, false)
+                            // userId를 사용하여 JWT 생성
+                            return jwtTokenProvider.generateToken(user.getId(), false)
                                     .flatMap(jwt -> ServerResponse.ok().bodyValue("Login successful. JWT: " + jwt));
                         })
                         .switchIfEmpty(Mono.error(new RuntimeException("User not found"))))
                 .onErrorResume(e -> ServerResponse.status(HttpStatus.UNAUTHORIZED).bodyValue("Error: " + e.getMessage()));
     }
+
 
 
 //
@@ -149,19 +142,21 @@ public class AuthHandler {
 
 
     private Mono<String> issueJwtToken(Map<String, Object> naverUserInfo) {
-        String username = (String) naverUserInfo.get("nickname");
+        String userId = (String) naverUserInfo.get("id");  // Naver OAuth에서 제공하는 사용자 ID
+
         String password = "NaverOAuthPassword";  // OAuth 비밀번호는 더미 값 사용
 
         // 기본적으로 USER 역할 부여
         UserDetails userDetails = new UserDetailsImpl(
-                username,
+                userId,
                 password,
                 Collections.singletonList(new SimpleGrantedAuthority("USER"))
         );
 
-        // JWT 생성
-        return jwtTokenProvider.generateToken(userDetails, false);
+        // JWT 생성 시 userId를 사용
+        return jwtTokenProvider.generateToken(userId, false);
     }
+
 
 
 

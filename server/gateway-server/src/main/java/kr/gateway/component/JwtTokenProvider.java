@@ -3,7 +3,10 @@ package kr.gateway.component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import kr.gateway.document.Token;
+import kr.gateway.repository.TokenRepository;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -30,8 +33,13 @@ public class JwtTokenProvider {
     @Value("${jwt.expired.refresh}")
     private long refreshTokenExpiration;
 
+    private final TokenRepository tokenRepository;
 
-    public Mono<String> generateToken(UserDetails userDetails, boolean isRefresh) {
+    public JwtTokenProvider(TokenRepository tokenRepository) {
+        this.tokenRepository = tokenRepository;
+    }
+
+    public Mono<String> generateToken(String userId, boolean isRefresh) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + accessTokenExpiration);
 
@@ -39,46 +47,54 @@ public class JwtTokenProvider {
         Key key = Keys.hmacShaKeyFor(keyBytes);
 
         String token = Jwts.builder()
-                .setSubject(userDetails.getUsername())
+                .setSubject(userId)
                 .setIssuedAt(now)
                 .setExpiration(expiration)
                 .signWith(key)
                 .compact();
 
+        Token tokenEntity = Token.builder()
+                .userId(userId)
+                .token(token)
+                .expirationDate(expiration)
+                .isValid(true)
+                .build();
+
+        tokenRepository.save(tokenEntity).subscribe();  // 토큰 저장
+
         return Mono.just(token);  // 생성된 토큰 반환
     }
+
 
     public long accessTokenExpiration() {
         return accessTokenExpiration;
     }
 
-    public Mono<Boolean> validateToken(String token) {
-        try {
-            byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-            SecretKey key = Keys.hmacShaKeyFor(keyBytes);
-
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token);
-            return Mono.just(true);
-        } catch (ExpiredJwtException e) {
-            // 만료된 토큰 처리
-            return Mono.just(false);
-        } catch (SignatureException e) {
-            // 서명이 잘못된 토큰 처리
-            return Mono.just(false);
-        } catch (MalformedJwtException e) {
-            // 형식이 잘못된 토큰 처리
-            return Mono.just(false);
-        } catch (Exception e) {
-            // 기타 예외 처리
-            return Mono.just(false);
-        }
-    }
-
-
-
+//    public Mono<Boolean> validateToken(String token) {
+//        try {
+//            byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+//            SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+//
+//            Jwts.parser()
+//                    .verifyWith(key)
+//                    .build()
+//                    .parseSignedClaims(token);
+//            return Mono.just(true);
+//        } catch (ExpiredJwtException e) {
+//            // 만료된 토큰 처리
+//            return Mono.just(false);
+//        } catch (SignatureException e) {
+//            // 서명이 잘못된 토큰 처리
+//            return Mono.just(false);
+//        } catch (MalformedJwtException e) {
+//            // 형식이 잘못된 토큰 처리
+//            return Mono.just(false);
+//        } catch (Exception e) {
+//            // 기타 예외 처리
+//            return Mono.just(false);
+//        }
+//    }
+//
 //    public String getUserIdFromToken(String token) {
 //        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
 //        Key key = Keys.hmacShaKeyFor(keyBytes);
@@ -91,7 +107,7 @@ public class JwtTokenProvider {
 //
 //        return claims.getSubject();  // subject에 userId 혹은 username 저장
 //    }
-
+//
 //    public Mono<String> refreshToken(String oldToken) {
 //        if (!validateToken(oldToken).block()) {
 //            return Mono.error(new RuntimeException("Invalid token"));
@@ -101,7 +117,7 @@ public class JwtTokenProvider {
 //        UserDetails userDetails = loadUserByUsername(userId);  // UserDetails를 가져오는 로직 필요
 //        return generateToken(userDetails, true);  // 리프레시 토큰 생성
 //    }
-
+//
 //    public Mono<Void> invalidateToken(String token) {
 //        return Mono.empty();
 //    }
