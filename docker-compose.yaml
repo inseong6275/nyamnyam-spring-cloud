@@ -1,10 +1,39 @@
 services:
+  mysql:
+    container_name: mysql
+    image: mysql:latest
+    volumes:
+      - ./mysql/nyamnyam/etc/mysql/conf.d:/etc/mysql/conf.d:ro
+      - ./mysql/nyamnyam/var/lib/mysql:/var/lib/mysql
+      - ./mysql/nyamnyam/var/log/mysql:/var/log/mysql
+    environment:
+      - MYSQL_DATABASE=nyamnyamdb
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_ROOT_HOST=%
+    command: [ '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci' ]
+    ports:
+      - "3306:3306"
+    restart: always
+
+  mongodb:
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongodb:/data/nyamnyamdb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=1234
+      - MONGO_INITDB_DATABASE=nyamnyamdb
+    restart: always
+
   eureka:
-    hostname: eureka-server
+    hostname: eureka
     build:
       context: ./server/eureka-server
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-eureka-server:latest
+    image: alrk/nyamnyam-eureka-server:latest
     container_name: eureka
     ports:
       - "8761:8761"
@@ -15,6 +44,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+
 
   gateway:
     hostname: gateway-server
