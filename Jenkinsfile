@@ -109,6 +109,18 @@ pipeline {
             }
         }
 
+        stage('Create ConfigMap') {
+            steps {
+                script {
+                    // ConfigMap for config-server
+                    sh '''
+                    kubectl create configmap config-server-config --from-file=nyamnyam.kr/server/config-server/src/main/resources/application.yml -n nyamnyam --dry-run=client -o yaml | kubectl apply -f -
+                    '''
+                    // 필요 시 다른 서비스의 ConfigMap 추가
+                }
+            }
+        }
+
         stage('Deploy to K8s') {
             steps {
                script {
@@ -117,14 +129,16 @@ pipeline {
                        sh '''
                        export NCP_ACCESS_KEY=$NCP_API_KEY
                        export NCP_SECRET_KEY=$NCP_SECRET_KEY
-                       kubectl apply -f nyamnyam.kr/deploy/was/config-server/config-server.yaml --kubeconfig=$KUBECONFIG
-                       kubectl apply -f nyamnyam.kr/deploy/was/eureka-server/eureka-server.yaml --kubeconfig=$KUBECONFIG
-                       kubectl apply -f nyamnyam.kr/deploy/was/gateway-server/gateway-server.yaml --kubeconfig=$KUBECONFIG
-                       kubectl apply -f nyamnyam.kr/deploy/was/admin-service/admin-service.yaml --kubeconfig=$KUBECONFIG
-                       kubectl apply -f nyamnyam.kr/deploy/was/chat-service/chat-service.yaml --kubeconfig=$KUBECONFIG
-                       kubectl apply -f nyamnyam.kr/deploy/was/post-service/post-service.yaml --kubeconfig=$KUBECONFIG
-                       kubectl apply -f nyamnyam.kr/deploy/was/restaurant-service/restaurant-service.yaml --kubeconfig=$KUBECONFIG
-                       kubectl apply -f nyamnyam.kr/deploy/was/user-service/user-service.yaml --kubeconfig=$KUBECONFIG
+                       export TOKEN=$(ncp-iam-authenticator token --clusterUuid f67e3902-54be-44a9-be88-e18e477991d9 --region KR)
+
+                       kubectl apply -f nyamnyam.kr/deploy/was/config-server/config-server.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
+                       kubectl apply -f nyamnyam.kr/deploy/was/eureka-server/eureka-server.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
+                       kubectl apply -f nyamnyam.kr/deploy/was/gateway-server/gateway-server.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
+                       kubectl apply -f nyamnyam.kr/deploy/was/admin-service/admin-service.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
+                       kubectl apply -f nyamnyam.kr/deploy/was/chat-service/chat-service.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
+                       kubectl apply -f nyamnyam.kr/deploy/was/post-service/post-service.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
+                       kubectl apply -f nyamnyam.kr/deploy/was/restaurant-service/restaurant-service.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
+                       kubectl apply -f nyamnyam.kr/deploy/was/user-service/user-service.yaml --kubeconfig=$KUBECONFIG --token=$TOKEN
                        '''
                }
              }
