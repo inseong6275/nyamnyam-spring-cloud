@@ -25,6 +25,7 @@ pipeline {
         stage('Create Namespace') { // 네임스페이스 생성 단계 추가
             steps {
                 script {
+                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
                     // 'nyamnyam-namespace.yaml' 파일을 사용해 네임스페이스 생성
                     sh '''
                     kubectl apply -f nyamnyam.kr/deploy/namespace/nyamnyam-namespace.yaml --kubeconfig=$KUBECONFIG
