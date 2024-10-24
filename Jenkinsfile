@@ -114,7 +114,7 @@ pipeline {
                 script {
                     // ConfigMap for config-server
                     sh '''
-                    kubectl create configmap config-server-config --from-file=nyamnyam.kr/server/config-server/src/main/resources/application.yml -n nyamnyam --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl create configmap config-server-config --from-file=nyamnyam.kr/server/config-server/src/main/resources/application.yaml -n nyamnyam --dry-run=client -o yaml | kubectl apply -f -
                     '''
                     // 필요 시 다른 서비스의 ConfigMap 추가
                 }
