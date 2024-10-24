@@ -1,14 +1,10 @@
 package kr.gateway.component;
 
-import kr.gateway.config.UserDetailsImpl;
 import kr.gateway.document.LoginRequest;
 import kr.gateway.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -22,7 +18,6 @@ import org.springframework.core.ParameterizedTypeReference;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -85,7 +80,6 @@ public class AuthHandler {
                 .onErrorResume(e -> ServerResponse.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-    // 4. 네이버 로그인 리디렉션 처리
     public Mono<ServerResponse> redirectToNaverLogin(ServerRequest request) {
         String state = UUID.randomUUID().toString();
         saveStateInSession(request.exchange(), state);
@@ -102,7 +96,6 @@ public class AuthHandler {
         return ServerResponse.temporaryRedirect(URI.create(authorizationUri)).build();
     }
 
-    // 세션에 state 값 저장
     private void saveStateInSession(ServerWebExchange exchange, String state) {
         exchange.getSession().doOnNext(session -> {
             session.getAttributes().put("oauth_state", state);
@@ -119,9 +112,8 @@ public class AuthHandler {
                 .flatMap(naverUserInfo -> {
                     String naverUserId = (String) naverUserInfo.get("id");
 
-                    // user-service로 네이버 사용자 ID로 회원 조회 요청
-                    return registerUserInUserServiceAsync(naverUserInfo)  // 회원가입을 성공적으로 처리한 후
-                            .then(issueJwtToken(naverUserInfo))               // 회원가입 성공 시 JWT 발급
+                    return registerUserInUserServiceAsync(naverUserInfo)
+                            .then(issueJwtToken(naverUserInfo))
                             .flatMap(jwt -> ServerResponse.ok().bodyValue("Login successful. JWT: " + jwt))
                             .onErrorResume(e -> {
                                 System.out.println("Error during registration: " + e.getMessage());
@@ -141,22 +133,16 @@ public class AuthHandler {
     }
 
     private Mono<Void> registerUserInUserServiceAsync(Map<String, Object> naverUserInfo) {
-        System.out.println("회원 가입 요청 도달: " + naverUserInfo);
-
-        return Mono.empty();  // 요청을 처리하지 않고 빈 응답 반환
+        return webClient.post()
+                .uri("http://localhost:8000/users/oauth/register")  // User 서비스에 있는 OAuth2 사용자 등록 엔드포인트 호출
+                .bodyValue(naverUserInfo)  // naverUserInfo에 담긴 데이터를 전송
+                .retrieve()
+                .bodyToMono(Void.class)
+                .onErrorResume(e -> {
+                    System.err.println("Failed to register user: " + e.getMessage());
+                    return Mono.empty();  // 오류 발생 시 빈 응답 처리
+                });
     }
-
-//    private Mono<Void> registerUserInUserServiceAsync(Map<String, Object> naverUserInfo) {
-//        return webClient.post()
-//                .uri("http://user-service/api/oauth/naver/signup")
-//                .bodyValue(naverUserInfo)
-//                .retrieve()
-//                .bodyToMono(Void.class)
-//                .onErrorResume(e -> {
-//                    System.err.println("Failed to register user: " + e.getMessage());
-//                    return Mono.empty();
-//                });
-//    }
 
     private Mono<String> issueJwtToken(Map<String, Object> naverUserInfo) {
         String userId = (String) naverUserInfo.get("id");

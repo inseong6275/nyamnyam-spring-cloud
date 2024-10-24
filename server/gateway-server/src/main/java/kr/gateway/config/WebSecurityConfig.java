@@ -30,11 +30,10 @@ public class WebSecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                        .pathMatchers("/api/users/**").permitAll()  // 사용자 관련 경로 인증 없이 허용
                         .anyExchange().permitAll()
                 )
-                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)  // HTTP Basic 인증 비활성화
-                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)  // 기본 로그인 폼 비활성화
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((exchange, e) -> {
                             System.out.println("Authentication failed, returning 401");
@@ -45,9 +44,6 @@ public class WebSecurityConfig {
 
         return http.build();
     }
-
-
-
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
