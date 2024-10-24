@@ -6,6 +6,9 @@ pipeline {
         DOCKER_IMAGE_PREFIX = 'inseonghwang0328/nyamnyam-config-server'
         services = "server/config-server,server/eureka-server,server/gateway-server,service/admin-service,service/chat-service,service/post-service,service/restaurant-service,service/user-service"
         DOCKERHUB_CREDENTIALS = credentials('dockerHubId')
+        KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'
+        NCP_API_KEY = credentials('ncloud-api-key')
+        NCP_SECRET_KEY = credentials('ncloud-secret-key')
     }
 
     stages {
@@ -22,6 +25,12 @@ pipeline {
         stage('Git Clone') {
             steps {
                 script {
+                    sh 'pwd'
+
+                    dir('nyamnyam.kr/deploy') {
+                        git branch: 'main', url: 'https://github.com/inseong6275/deploy.git', credentialsId: 'gitHubAccessToken'
+                    }
+
                     dir('nyamnyam.kr/server/config-server') {
                         git branch: 'main', url: 'https://github.com/inseong6275/nyamnyam-config-server.git', credentialsId: 'gitHubAccessToken'
                     }
@@ -102,16 +111,23 @@ pipeline {
 
         stage('Deploy to K8s') {
             steps {
-                script {
-                    // deploy.yaml 파일 수정
-                    sh "sed -i 's,TEST_IMAGE_NAME,${DOCKER_IMAGE_PREFIX}:latest,' deploy.yaml"
-                    sh "cat deploy.yaml"
-                    // Kubernetes에서 현재 Pod 상태 확인
-                    sh "kubectl --kubeconfig=/home/ec2-user/config get pods"
-                    // deploy.yaml을 Kubernetes에 적용
-                    sh "kubectl --kubeconfig=/home/ec2-user/config apply -f deploy.yaml"
-                }
-            }
+               script {
+                   withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                     // 환경 변수로 API Key와 Secret Key 설정 후 ncp-iam-authenticator에 전달
+                       sh '''
+                       export NCP_ACCESS_KEY=$NCP_API_KEY
+                       export NCP_SECRET_KEY=$NCP_SECRET_KEY
+                       kubectl apply -f nyamnyam.kr/deploy/was/config-server/config-server.yaml --kubeconfig=$KUBECONFIG
+                       kubectl apply -f nyamnyam.kr/deploy/was/eureka-server/eureka-server.yaml --kubeconfig=$KUBECONFIG
+                       kubectl apply -f nyamnyam.kr/deploy/was/gateway-server/gateway-server.yaml --kubeconfig=$KUBECONFIG
+                       kubectl apply -f nyamnyam.kr/deploy/was/admin-service/admin-service.yaml --kubeconfig=$KUBECONFIG
+                       kubectl apply -f nyamnyam.kr/deploy/was/chat-service/chat-service.yaml --kubeconfig=$KUBECONFIG
+                       kubectl apply -f nyamnyam.kr/deploy/was/post-service/post-service.yaml --kubeconfig=$KUBECONFIG
+                       kubectl apply -f nyamnyam.kr/deploy/was/restaurant-service/restaurant-service.yaml --kubeconfig=$KUBECONFIG
+                       kubectl apply -f nyamnyam.kr/deploy/was/user-service/user-service.yaml --kubeconfig=$KUBECONFIG
+                       '''
+               }
+             }
         }
     }
 }

@@ -33,7 +33,7 @@ services:
     build:
       context: ./server/eureka-server
       dockerfile: Dockerfile
-    image: alrk/nyamnyam-eureka-server:latest
+    image: inseonghwang0328/nyamnyam-eureka-server:latest
     container_name: eureka
     ports:
       - "8761:8761"
