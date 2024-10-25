@@ -1,12 +1,17 @@
 server:
   port: 8761
-
 eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
 spring:
   profiles:
-    active: prod
+    active: local
   config:
+    import: optional:configserver:http://localhost:8888
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
     import: optional:configserver:http://223.130.155.121:8888

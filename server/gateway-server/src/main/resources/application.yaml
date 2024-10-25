@@ -2,6 +2,12 @@
     application:
       name: gateway-server
     profiles:
-      active: prod
+      active: local
     config:
+      import: optional:configserver:localhost:8888
+---
+  spring:
+    config:
+      activate:
+        on-profile: prod
       import: optional:configserver:http://223.130.155.121:8888
