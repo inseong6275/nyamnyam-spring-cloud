@@ -9,7 +9,6 @@ pipeline {
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'
         NCP_API_KEY = credentials('ncloud-api-key')
         NCP_SECRET_KEY = credentials('ncloud-secret-key')
-        SPRING_PROFILES_ACTIVE = 'prod'
     }
 
     stages {
