@@ -1,10 +1,9 @@
 package kr.chat.controller;
 
 
-import com.amazonaws.services.kms.model.NotFoundException;
+
 import kr.chat.document.ChatRoom;
 import kr.chat.service.ChatRoomService;
-import kr.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -17,7 +16,6 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/chatRoom")
 public class ChatRoomController {
     private final ChatRoomService chatRoomService;
-    private final ChatService chatService;
 
 
     @PostMapping("/save")
@@ -41,8 +39,7 @@ public class ChatRoomController {
 
     @GetMapping("/{id}")
     public Mono<ChatRoom> findById(@PathVariable String id) {
-        return chatRoomService.findById(id)
-                .switchIfEmpty(Mono.error(new NotFoundException("Chat room not found"))); // 채팅방이 없는 경우 예외 처리
+        return chatRoomService.findById(id);
     }
 
 
@@ -54,7 +51,7 @@ public class ChatRoomController {
                     if (exists) {
                         return chatRoomService.deleteById(id);
                     } else {
-                        return Mono.error(new NotFoundException("Chat room not found")); // 채팅방이 없는 경우 예외 처리
+                        return Mono.empty(); // 채팅방이 없는 경우 빈 Mono 반환
                     }
                 });
     }
