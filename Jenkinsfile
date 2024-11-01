@@ -22,18 +22,6 @@ pipeline {
             }
         }
 
-        stage('Create Namespace') {
-            steps {
-                script {
-                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                        sh '''
-                        kubectl apply -f nyamnyam.kr/deploy/namespace/nyamnyam-namespace.yaml --kubeconfig=$KUBECONFIG
-                        '''
-                    }
-                }
-            }
-        }
-
         stage('Git Clone') {
             steps {
                 script {
@@ -49,6 +37,18 @@ pipeline {
 
                     dir('nyamnyam.kr/server/config-server/src/main/resources/secret-server') {
                         git branch: 'main', url: 'https://github.com/inseong6275/nyamnyam-secret-server.git', credentialsId: 'gitHubAccessToken'
+                    }
+                }
+            }
+        }
+
+        stage('Create Namespace') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                        sh '''
+                        kubectl apply -f nyamnyam.kr/deploy/namespace/nyamnyam-namespace.yaml --kubeconfig=$KUBECONFIG
+                        '''
                     }
                 }
             }
