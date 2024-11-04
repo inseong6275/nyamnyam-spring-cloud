@@ -5,4 +5,3 @@ spring:
     active: prod
   config:
     import: "optional:configserver:http://nyamnyam-config-server-5a3b4-100249161-d288584db448.kr.lb.naverncp.com:8888/"
-

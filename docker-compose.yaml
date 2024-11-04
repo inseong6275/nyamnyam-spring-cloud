@@ -1,7 +1,7 @@
 services:
   mysql:
     container_name: mysql
-    image: mysql:latest
+    image: mysql:0.01
     volumes:
       - ./mysql/nyamnyam/etc/mysql/conf.d:/etc/mysql/conf.d:ro
       - ./mysql/nyamnyam/var/lib/mysql:/var/lib/mysql
@@ -17,7 +17,7 @@ services:
 
   mongodb:
     container_name: mongo
-    image: mongo:latest
+    image: mongo:0.01
     ports:
       - 27017:27017
     volumes:
@@ -33,14 +33,14 @@ services:
     build:
       context: ./server/eureka-server
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-eureka-server:latest
+    image: inseonghwang0328/nyamnyam-eureka-server:0.01
     container_name: eureka
     ports:
       - "8761:8761"
     networks:
       - nyamnyam-kr
     healthcheck:
-      test: ["CMD-SHELL", "curl -sS http://localhost:8761/actuator/health | grep -q '\"status\":\"UP\"'"]
+      test: [ "CMD-SHELL", "curl -sS http://localhost:8761/actuator/health | grep -q '\"status\":\"UP\"'" ]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -51,7 +51,7 @@ services:
     build:
       context: ./server/gateway-server
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-gateway-server:latest
+    image: inseonghwang0328/nyamnyam-gateway-server:0.01
     container_name: gateway-server
     ports:
       - "8000:8000"
@@ -61,7 +61,7 @@ services:
     networks:
       - nyamnyam-kr
     healthcheck:
-      test: ["CMD-SHELL", "curl -sS http://localhost:8000/actuator/health | grep -q '\"status\":\"UP\"'"]
+      test: [ "CMD-SHELL", "curl -sS http://localhost:8000/actuator/health | grep -q '\"status\":\"UP\"'" ]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -71,7 +71,7 @@ services:
     build:
       context: ./service/admin-service
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-admin-service:latest
+    image: inseonghwang0328/nyamnyam-admin-service:0.01
     container_name: admin-service
     ports:
       - "8001:8001"
@@ -88,7 +88,7 @@ services:
     build:
       context: ./service/chat-service
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-chat-service:latest
+    image: inseonghwang0328/nyamnyam-chat-service:0.01
     container_name: chat-service
     ports:
       - "8002:8002"
@@ -110,7 +110,7 @@ services:
     build:
       context: ./service/post-service
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-post-service:latest
+    image: inseonghwang0328/nyamnyam-post-service:0.01
     container_name: post-service
     ports:
       - "8003:8003"
@@ -127,7 +127,7 @@ services:
     build:
       context: ./service/restaurant-service
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-restaurant-service:latest
+    image: inseonghwang0328/nyamnyam-restaurant-service:0.01
     container_name: restaurant-service
     ports:
       - "8004:8004"
@@ -145,7 +145,7 @@ services:
     build:
       context: ./service/user-service
       dockerfile: Dockerfile
-    image: inseonghwang0328/nyamnyam-user-service:latest
+    image: inseonghwang0328/nyamnyam-user-service:0.01
     container_name: user-service
     ports:
       - "8005:8005"
@@ -158,5 +158,5 @@ services:
       - nyamnyam-kr
 
 networks:
-  nyamnyam-kr:  # 네트워크 정의 추가
+  nyamnyam-kr: # 네트워크 정의 추가
     driver: bridge  # 필요한 경우 드라이버 지정
