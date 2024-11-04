@@ -75,7 +75,7 @@ pipeline {
             steps {
                 script {
                     dir('nyamnyam.kr') {
-                        sh "cd server/config-server && docker build -t ${DOCKER_CREDENTIALS_ID}/nyamnyam-config-server:latest ."
+                        sh "cd server/config-server && docker build -t ${DOCKER_CREDENTIALS_ID}/nyamnyam-config-server:0.01 ."
                     }
 
                     dir('nyamnyam.kr') {
@@ -99,7 +99,7 @@ pipeline {
                     def servicesList = env.services.split(',')
                     servicesList.each { service ->
                         def serviceName = service.split('/')[1]
-                        sh "docker push ${DOCKER_CREDENTIALS_ID}/nyamnyam-${serviceName}:latest"
+                        sh "docker push ${DOCKER_CREDENTIALS_ID}/nyamnyam-${serviceName}:0.01"
                     }
                 }
             }
@@ -111,7 +111,7 @@ pipeline {
                     def servicesList = env.services.split(',')
                     servicesList.each { service ->
                         def serviceName = service.split('/')[1]
-                        sh "docker rmi ${DOCKER_CREDENTIALS_ID}/nyamnyam-${serviceName}:latest"
+                        sh "docker rmi ${DOCKER_CREDENTIALS_ID}/nyamnyam-${serviceName}:0.01"
                     }
                 }
             }
@@ -166,7 +166,7 @@ pipeline {
                       kubectl apply -f nyamnyam.kr/deploy/ingress/nyamnyam-api-ingress.yaml --kubeconfig=$KUBECONFIG
                       '''
                     }
-                }
+                }`
             }
         }
     }
